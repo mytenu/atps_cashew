@@ -4,7 +4,6 @@ from tensorflow import keras
 import numpy as np
 from PIL import Image
 import io
-import os
 
 # Page configuration
 st.set_page_config(
@@ -159,51 +158,13 @@ DISEASE_INFO = {
 
 @st.cache_resource
 def load_model(model_path):
-    """Load the trained Keras model with compatibility fixes for DepthwiseConv2D"""
-    
-    # Check if model file exists
-    if not os.path.exists(model_path):
-        st.error(f"❌ Model file '{model_path}' not found in the repository!")
-        st.info("Please ensure 'keras_model.h5' is uploaded to your GitHub repository root.")
-        return None
-    
+    """Load the trained Keras model"""
     try:
-        # Attempt 1: Load without compiling (fastest method)
-        model = keras.models.load_model(model_path, compile=False)
+        model = keras.models.load_model(model_path)
         return model
-        
     except Exception as e:
-        st.warning(f"Standard loading failed, trying compatibility mode...")
-        
-        # Attempt 2: Load with custom objects to handle legacy parameters
-        try:
-            from tensorflow.keras.layers import DepthwiseConv2D
-            
-            # Custom DepthwiseConv2D that strips unsupported parameters
-            class CustomDepthwiseConv2D(DepthwiseConv2D):
-                def __init__(self, *args, **kwargs):
-                    # Remove 'groups' parameter (not supported in TensorFlow 2.20+)
-                    kwargs.pop('groups', None)
-                    super().__init__(*args, **kwargs)
-            
-            # Define custom objects mapping
-            custom_objects = {
-                'DepthwiseConv2D': CustomDepthwiseConv2D
-            }
-            
-            # Load model with custom objects
-            model = keras.models.load_model(
-                model_path,
-                custom_objects=custom_objects,
-                compile=False
-            )
-            
-            return model
-            
-        except Exception as e2:
-            st.error(f"❌ Failed to load model: {str(e2)}")
-            st.error("Please try re-exporting your model with the latest TensorFlow version.")
-            return None
+        st.error(f"Error loading model: {str(e)}")
+        return None
 
 def preprocess_image(image, target_size=(224, 224)):
     """Preprocess the image for model prediction"""
@@ -253,7 +214,7 @@ def main():
     if logo_img:
         col_left, col_center, col_right = st.columns([1, 1, 1])
         with col_left:
-            st.image(logo_img, width=500)
+            st.image(logo_img, width=500, use_container_width=True)
 
     # Header
     st.markdown('<h1 class="main-header">🌿 Cashew Disease Detection System</h1>', 
@@ -273,13 +234,13 @@ def main():
             st.markdown("""
                 <div style='opacity: 0.2; filter: blur(1px);'>
             """, unsafe_allow_html=True)
-            st.image(cashew_img1, width="stretch")
+            st.image(cashew_img1, use_container_width=True)
             st.markdown("</div>", unsafe_allow_html=True)
         with deco_col3:
             st.markdown("""
                 <div style='opacity: 0.2; filter: blur(1px);'>
             """, unsafe_allow_html=True)
-            st.image(cashew_img2, width="stretch")
+            st.image(cashew_img2, use_container_width=True)
             st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("<br>", unsafe_allow_html=True)
     
@@ -334,7 +295,7 @@ def main():
         if uploaded_file is not None:
             # Display uploaded image
             image = Image.open(uploaded_file)
-            st.image(image, caption='Uploaded Image', width="stretch")
+            st.image(image, caption='Uploaded Image', use_container_width=True)
     
     with col2:
         st.subheader("🔍 Prediction Results")
