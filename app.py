@@ -253,7 +253,7 @@ def main():
     if logo_img:
         col_left, col_center, col_right = st.columns([1, 1, 1])
         with col_left:
-            st.image(logo_img, width=500, width="stretch")
+            st.image(logo_img, width=500)
 
     # Header
     st.markdown('<h1 class="main-header">🌿 Cashew Disease Detection System</h1>', 
